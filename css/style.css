@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Protest+Riot&display=swap');
-
 :root {
     --orange: #f46524;
 }
 .text-orange {
     color: var(--orange)
+}
+
+.bg-orange {
+    background: var(--orange);
 }
 
 .border-none {
@@ -70,22 +72,13 @@ section#lectures {
     background-position: center;
 }
 
-section#lectures .card {
-    border: none;
-    border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.7);
+section#lectures .lecture {
+    transition: 300ms;
 }
 
-section#lectures .card-header {
-    border: none;
-    border-radius: 0;
-    color: #fff;
-    text-align: center;
-    background-color: rgba(244, 101, 36, 1);
-}
-
-section#lectures .card-body {
-    color: #000;
+section#lectures .lecture:hover {
+    transform: scale(1.05);
+    cursor: pointer;
 }
 
 section#personal-dev {
@@ -95,9 +88,22 @@ section#personal-dev {
     background-position: center;
 }
 
+.modal-content {
+    border-radius: 0;
+}
+
+.modal-header {
+    border: 0;
+}
+
+.modal textarea {
+    resize: none;
+}
+
 @media only screen and (max-width: 600px) {
   section h2 {
     text-align: center;
     margin-top: 10px;
   }
+  
 }
