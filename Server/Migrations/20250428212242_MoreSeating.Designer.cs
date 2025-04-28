@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Models;
 
@@ -11,9 +12,11 @@ using Server.Models;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20250428212242_MoreSeating")]
+    partial class MoreSeating
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,6 +39,9 @@ namespace Server.Migrations
                     b.Property<int?>("BookedByUserId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Occupied")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("SeatNumber")
                         .HasColumnType("int");
 
@@ -44,10 +50,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookedByUserId")
-                        .IsUnique();
-
-                    b.HasIndex("TableId");
+                    b.HasIndex("BookedByUserId");
 
                     b.ToTable("Seats");
                 });
@@ -64,9 +67,7 @@ namespace Server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("TableName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -82,17 +83,14 @@ namespace Server.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("Password")
-                        .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("varchar(512)");
 
                     b.Property<string>("Username")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
@@ -103,30 +101,16 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.SeatingModels.Seat", b =>
                 {
-                    b.HasOne("Server.Models.UserModels.User", "User")
-                        .WithOne("BookedSeat")
-                        .HasForeignKey("Server.Models.SeatingModels.Seat", "BookedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Server.Models.SeatingModels.Table", "Table")
                         .WithMany("Seats")
-                        .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BookedByUserId");
 
                     b.Navigation("Table");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Server.Models.SeatingModels.Table", b =>
                 {
                     b.Navigation("Seats");
-                });
-
-            modelBuilder.Entity("Server.Models.UserModels.User", b =>
-                {
-                    b.Navigation("BookedSeat");
                 });
 #pragma warning restore 612, 618
         }

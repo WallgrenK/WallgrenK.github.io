@@ -14,20 +14,45 @@ namespace Server.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>()
-                .Property(u => u.Password)
-                .HasMaxLength(512);
-            modelBuilder.Entity<User>()
-                .Property(u => u.Username)
-                .HasMaxLength(50);
-            modelBuilder.Entity<User>()
-                .Property(u => u.Email)
-                .HasMaxLength(100);
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.Property(u => u.Password)
+                    .IsRequired()
+                    .HasMaxLength(512);
 
-            modelBuilder.Entity<Seat>()
-                .HasOne(s => s.Table)
-                .WithMany(t => t.Seats)
-                .HasForeignKey(s => s.TableId);
+                entity.Property(u => u.Username)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(u => u.Email)
+                    .IsRequired()
+                    .HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<Table>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+
+                entity.Property(t => t.TableName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasMany(t => t.Seats)           
+                    .WithOne(s => s.Table)              
+                    .HasForeignKey(s => s.TableId)      
+                    .OnDelete(DeleteBehavior.Cascade);  
+            });
+
+            modelBuilder.Entity<Seat>(entity =>
+            {
+                entity.HasOne(s => s.User)
+                    .WithOne(u => u.BookedSeat)
+                    .HasForeignKey<Seat>(s => s.BookedByUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(s => s.BookedByUserId)
+                    .IsUnique();
+            });
         }
     }
 }

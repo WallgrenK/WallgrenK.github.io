@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Models;
 
@@ -11,9 +12,11 @@ using Server.Models;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20250428221821_MoreSeatingShit")]
+    partial class MoreSeatingShit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,6 +38,9 @@ namespace Server.Migrations
 
                     b.Property<int?>("BookedByUserId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("Occupied")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("SeatNumber")
                         .HasColumnType("int");

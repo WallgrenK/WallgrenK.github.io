@@ -1,5 +1,7 @@
-﻿using Server.Models.Interface;
+﻿using Microsoft.EntityFrameworkCore;
+using Server.Models.Interface;
 using Server.Models.SeatingModels;
+using Server.Models.SeatingModels.DTO;
 
 namespace Server.Models.Services
 {
@@ -14,19 +16,76 @@ namespace Server.Models.Services
             _context = context;
         }
 
-        public Task<bool> BookSeatAsync(int seatId, int userId)
+        public async Task<bool> BookSeatAsync(BookSeatRequest booking)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Entering BookSeatAsync");
+            var seat = await _context.Seats.FindAsync(booking.SeatId);
+            var user = await _context.Users.FindAsync(booking.UserId);
+
+            if (seat == null || user == null)
+            {
+                _logger.LogError("Seat or user was null");
+                return false;
+            }
+
+            if (seat.BookedByUserId != null)
+            {
+                _logger.LogError("Seat already booked");
+                return false;
+            }
+
+            var existingBooking = await _context.Seats.FirstOrDefaultAsync(s => s.BookedByUserId == booking.UserId);
+            if (existingBooking != null)
+            {
+                return false;
+            }
+
+            seat.BookedByUserId = user.Id;
+            seat.BookedAt = DateTime.UtcNow;
+
+            _context.Seats.Update(seat);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
-        public Task<bool> CancelBookingAsync(int seatId, int userId)
+        public async Task<bool> CancelBookingAsync(CancelSeatRequest request)
         {
-            throw new NotImplementedException();
+            var seat = await _context.Seats.FindAsync(request.SeatId);
+            var user = await _context.Users.FindAsync(request.UserId);
+
+            if (seat == null || user == null)
+            {
+                return false;
+            }
+
+            if (seat.BookedByUserId != user.Id)
+            {
+                return false;
+            }
+
+            seat.BookedAt = null;
+            seat.BookedByUserId = null;
+
+            _context.Seats.Update(seat);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
-        public Task<IEnumerable<Table>> GetAvailableSeatsAsync()
+        public async Task<IEnumerable<Seat>> GetAllSeatsAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Seats.ToListAsync<Seat>();
+        }
+
+        public async Task<IEnumerable<Seat>> GetAvalibleSeatsAsync()
+        {
+            return await _context.Seats.Where(s => s.BookedByUserId == null).ToListAsync<Seat>();
+        }
+
+        public async Task<Seat?> GetBookingByUserIdAsync(int userId)
+        {
+            return await _context.Seats.FirstOrDefaultAsync(s => s.BookedByUserId == userId);
         }
     }
 }
