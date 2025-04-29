@@ -58,17 +58,23 @@ namespace Server.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
         {
-            var usernameAvalible = await _userService.GetByUsernameAsync(registerDto.Username);
-            if (usernameAvalible != null)
-            {
-                return BadRequest("Username already taken.");
-            }
-
             ValidationResult validationResult = await _registerValidator.ValidateAsync(registerDto);
 
             if (!validationResult.IsValid)
             {
                 return BadRequest(validationResult.Errors);
+            }
+
+            var usernameAvalible = await _userService.GetUserByUsernameAsync(registerDto.Username);
+            var emailAvalible = await _userService.GetUserByEmailAsync(registerDto.Email);
+            
+            if (usernameAvalible != null)
+            {
+                return BadRequest("Användarnamn upptaget");
+            }
+            if (emailAvalible != null)
+            {
+                return BadRequest("Angiven email är redan i bruk");
             }
 
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
@@ -82,23 +88,23 @@ namespace Server.Controllers
 
             await _userService.AddAsync(user);
 
-            return Ok("User registered successfully");
+            return Ok("Registrering lyckades!");
 
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            var user = await _userService.GetByUsernameAsync(loginDto.Username);
+            var user = await _userService.GetUserByUsernameAsync(loginDto.Username);
 
             if (user?.Username == null)
             {
-                return Unauthorized("Invalid username or password.");
+                return Unauthorized("Ogiltigt användarnamn eller lösenord");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
             {
-                return Unauthorized("Invalid password.");
+                return Unauthorized("Ogiltigt lösenord.");
             }
 
             string token = _jwtHelperService.GenerateToken(user.Username, user.Id);

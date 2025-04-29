@@ -1,6 +1,6 @@
 using Server.Models;
 using Microsoft.EntityFrameworkCore;
-using Server;
+using Server.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
@@ -24,6 +24,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

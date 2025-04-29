@@ -6,7 +6,8 @@ namespace Server.Models.Interface
     {
         Task<IEnumerable<User>> GetAllAsync();
         Task<User?> GetAsync(int id);
-        Task<User?> GetByUsernameAsync(string username);
+        Task<User?> GetUserByUsernameAsync(string username);
+        Task<User?> GetUserByEmailAsync(string email);
         Task AddAsync(User entity);
         Task UpdateAsync(User entityToUpdate, User entity);
         Task DeleteAsync(User entity);

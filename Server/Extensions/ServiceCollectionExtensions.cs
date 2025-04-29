@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Server.Models.Interface;
+using Server.Models.SeatingModels.Validation;
 using Server.Models.Services;
 using Server.Models.UserModels.Validation;
 using Server.Security.Jwt;
 using System.Text;
 
-namespace Server
+namespace Server.Extensions
 {
     public static class ServiceCollectionExtensions
     {
@@ -16,6 +17,7 @@ namespace Server
             services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+            services.AddAuthorization();
 
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IBookingService, BookingService>();
@@ -39,12 +41,13 @@ namespace Server
                         options.TokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuer = true,
-                            ValidIssuer = issuer,
                             ValidateAudience = true,
-                            ValidAudience = audience,
                             ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidIssuer = issuer,
+                            ValidAudience = audience,
                             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-                            ClockSkew = TimeSpan.FromMinutes(5),
+                            ClockSkew = TimeSpan.FromMinutes(20),
                         };
                     }
                 });
@@ -54,6 +57,9 @@ namespace Server
         public static IServiceCollection AddValidators(this IServiceCollection services)
         {
             services.AddValidatorsFromAssemblyContaining<RegisterDTOValidator>();
+            services.AddValidatorsFromAssemblyContaining<LoginDTOValidator>();
+            services.AddValidatorsFromAssemblyContaining<BookSeatRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<CancelSeatRequestValidator>();
 
             return services;
         }

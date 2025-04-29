@@ -35,13 +35,25 @@ namespace Server.Models.Services
             return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<User?> GetByUsernameAsync(string username)
+        public async Task<User?> GetUserByUsernameAsync(string username)
         {
             var response = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
             if (response == null) 
             {
                 _logger.LogError($"User with username {username} was not found.");
+            }
+
+            return response;
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            var response = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (response == null)
+            {
+                _logger.LogError($"No user with the email address {email} was found");
             }
 
             return response;
