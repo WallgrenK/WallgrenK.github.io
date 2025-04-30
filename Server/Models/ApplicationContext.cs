@@ -1,26 +1,25 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Server.Models.SeatingModels;
 using Server.Models.UserModels;
 
 namespace Server.Models
 {
-    public class ApplicationContext : DbContext
+    public class ApplicationContext : IdentityDbContext<User>
+
     {
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) { }
-        public DbSet<User> Users { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<Seat> Seats { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<User>(entity =>
             {
-                entity.Property(u => u.Password)
-                    .IsRequired()
-                    .HasMaxLength(512);
-
-                entity.Property(u => u.Username)
+                entity.Property(u => u.UserName)
                     .IsRequired()
                     .HasMaxLength(50);
 
@@ -37,10 +36,10 @@ namespace Server.Models
                     .IsRequired()
                     .HasMaxLength(100);
 
-                entity.HasMany(t => t.Seats)           
-                    .WithOne(s => s.Table)              
-                    .HasForeignKey(s => s.TableId)      
-                    .OnDelete(DeleteBehavior.Cascade);  
+                entity.HasMany(t => t.Seats)
+                    .WithOne(s => s.Table)
+                    .HasForeignKey(s => s.TableId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Seat>(entity =>

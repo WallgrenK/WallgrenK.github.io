@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Server.Models.UserModels;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,19 +11,24 @@ namespace Server.Security.Jwt
     public class JwtHelperService
     {
         private readonly JwtSettings _jwtSettings;
+        private readonly UserManager<User> _userManager;
 
-        public JwtHelperService(IOptions<JwtSettings> settings)
+        public JwtHelperService(UserManager<User> userManager, IOptions<JwtSettings> settings)
         {
             _jwtSettings = settings.Value;
+            _userManager = userManager;
         }
 
-        public string GenerateToken(string username, int id)
+        public async Task<string> GenerateToken(User user)
         {
-            Claim[] claims = new Claim[]
+            List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, id.ToString()),
-                new Claim(ClaimTypes.Name, username)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName ?? user.Id),
             };
+
+            var roles = await _userManager.GetRolesAsync(user);
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -36,7 +42,6 @@ namespace Server.Security.Jwt
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-
         }
     }
 }

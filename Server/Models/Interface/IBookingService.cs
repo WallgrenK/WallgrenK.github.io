@@ -7,7 +7,7 @@ namespace Server.Models.Interface
     {
         Task<bool> BookSeatAsync(BookSeatRequest booking);
         Task<bool> CancelBookingAsync(CancelSeatRequest request);
-        Task<Seat?> GetBookingByUserIdAsync(int userId);
+        Task<Seat?> GetBookingByUserIdAsync(string userId);
         Task<IEnumerable<Seat>> GetAvalibleSeatsAsync();
         Task<IEnumerable<Seat>> GetAllSeatsAsync();
     }

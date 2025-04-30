@@ -51,7 +51,7 @@ namespace Server.Controllers
 
         [Authorize]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetSeatByUserId(int id)
+        public async Task<IActionResult> GetSeatByUserId(string id)
         {
             Seat? seat = await _bookingService.GetBookingByUserIdAsync(id);
 

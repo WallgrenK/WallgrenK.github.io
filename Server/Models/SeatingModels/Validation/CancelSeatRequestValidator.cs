@@ -8,8 +8,7 @@ namespace Server.Models.SeatingModels.Validation
         public CancelSeatRequestValidator()
         {
             RuleFor(x => x.UserId)
-                .NotEmpty()
-                .GreaterThan(0);
+                .NotEmpty().WithMessage("UserId cannot be empty");
 
             RuleFor(x => x.SeatId)
                 .NotEmpty()

@@ -1,7 +1,9 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Server.Models.Interface;
 using Server.Models.UserModels;
 using Server.Models.UserModels.DTO;
@@ -16,13 +18,12 @@ namespace Server.Controllers
     {
         private readonly IUserService _userService;
         private readonly JwtHelperService _jwtHelperService;
-        private readonly IValidator<RegisterDTO> _registerValidator;
+        
 
-        public UsersController(IValidator<RegisterDTO> registerValidator, IUserService dataRepository, JwtHelperService jwtHelperService)
+        public UsersController(IUserService dataRepository, JwtHelperService jwtHelperService)
         {
             _userService = dataRepository;
             _jwtHelperService = jwtHelperService;
-            _registerValidator = registerValidator;
         }
 
         [HttpGet]
@@ -45,7 +46,7 @@ namespace Server.Controllers
         }
 
         [HttpGet("{id}", Name = "GetUser")]
-        public async Task<IActionResult> GetUser(int id)
+        public async Task<IActionResult> GetUser(string id)
         {
             var user = await _userService.GetAsync(id);
             if (user is null)
@@ -55,61 +56,31 @@ namespace Server.Controllers
             return Ok(user);
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
         {
-            ValidationResult validationResult = await _registerValidator.ValidateAsync(registerDto);
-
-            if (!validationResult.IsValid)
+            var result = await _userService.RegisterAsync(registerDto);
+            if (!result.Succeeded)
             {
-                return BadRequest(validationResult.Errors);
+                return BadRequest(new { errors = result.Errors });
             }
-
-            var usernameAvalible = await _userService.GetUserByUsernameAsync(registerDto.Username);
-            var emailAvalible = await _userService.GetUserByEmailAsync(registerDto.Email);
-            
-            if (usernameAvalible != null)
-            {
-                return BadRequest("Användarnamn upptaget");
-            }
-            if (emailAvalible != null)
-            {
-                return BadRequest("Angiven email är redan i bruk");
-            }
-
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
-
-            User user = new User
-            {
-                Username = registerDto.Username,
-                Password = passwordHash,
-                Email = registerDto.Email
-            };
-
-            await _userService.AddAsync(user);
 
             return Ok("Registrering lyckades!");
-
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            var user = await _userService.GetUserByUsernameAsync(loginDto.Username);
+            var result = await _userService.LoginAsync(loginDto);
 
-            if (user?.Username == null)
+            if (!result.Succeeded)
             {
-                return Unauthorized("Ogiltigt användarnamn eller lösenord");
+                return Unauthorized(new { errors = result.Errors });
             }
-
-            if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
-            {
-                return Unauthorized("Ogiltigt lösenord.");
-            }
-
-            string token = _jwtHelperService.GenerateToken(user.Username, user.Id);
-
-            return Ok(new { Token = token });
+            
+            return Ok(result);
         }
     }
 }

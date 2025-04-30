@@ -6,12 +6,12 @@
     public class BookSeatRequest
     {
         public int SeatId { get; set; }
-        public int UserId { get; set; }
+        public required string UserId { get; set; }
     }
 
     public class CancelSeatRequest
     {
         public int SeatId { get; set; }
-        public int UserId { get; set; }
+        public required string UserId { get; set; }
     }
 }

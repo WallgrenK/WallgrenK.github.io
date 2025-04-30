@@ -83,7 +83,7 @@ namespace Server.Models.Services
             return await _context.Seats.Where(s => s.BookedByUserId == null).ToListAsync<Seat>();
         }
 
-        public async Task<Seat?> GetBookingByUserIdAsync(int userId)
+        public async Task<Seat?> GetBookingByUserIdAsync(string userId)
         {
             return await _context.Seats.FirstOrDefaultAsync(s => s.BookedByUserId == userId);
         }

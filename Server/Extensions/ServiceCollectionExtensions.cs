@@ -1,10 +1,16 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Server.Models;
 using Server.Models.Interface;
 using Server.Models.SeatingModels.Validation;
 using Server.Models.Services;
+using Server.Models.UserModels;
 using Server.Models.UserModels.Validation;
+using Server.Security.Authorization.Handlers;
 using Server.Security.Jwt;
 using System.Text;
 
@@ -14,11 +20,28 @@ namespace Server.Extensions
     {
         public static IServiceCollection AddCustomServices(this IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers(config =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                                 .RequireAuthenticatedUser()
+                                 .Build();
+                config.Filters.Add(new AuthorizeFilter(policy));
+            });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
 
+            services.AddDefaultIdentity<User>(
+                options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationContext>();
+            
+            services.AddScoped<IAuthorizationHandler, UserIsOwnerAuthorizationHandler>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IBookingService, BookingService>();
             services.AddSingleton<JwtHelperService>();
