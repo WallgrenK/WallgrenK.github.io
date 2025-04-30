@@ -13,6 +13,7 @@ using Server.Models.UserModels.Validation;
 using Server.Security.Authorization.Handlers;
 using Server.Security.Jwt;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Server.Extensions
 {
@@ -26,7 +27,9 @@ namespace Server.Extensions
                                  .RequireAuthenticatedUser()
                                  .Build();
                 config.Filters.Add(new AuthorizeFilter(policy));
-            });
+            }).AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+
+
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
             services.AddAuthorization(options =>
@@ -40,11 +43,12 @@ namespace Server.Extensions
                 options => options.SignIn.RequireConfirmedAccount = true)
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationContext>();
-            
+
             services.AddScoped<IAuthorizationHandler, UserIsOwnerAuthorizationHandler>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IBookingService, BookingService>();
-            services.AddSingleton<JwtHelperService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<JwtHelperService>();
 
             return services;
         }

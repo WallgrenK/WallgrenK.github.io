@@ -1,3 +1,94 @@
+export const login = () => {
+  const username = document.querySelector("#loginUsername");
+  const password = document.querySelector("#loginPassword");
+  const errorMessage = document.querySelector("#loginErrorMessage");
+  const form = document.querySelector("#loginForm");
+
+  // username.addEventListener("input", () => {
+  //   const validatedName = validateName(username.value);
+
+  //   if (!validatedName.isValid) {
+  //     errorMessage.innerHTML = "Användarnamn måste anges";
+  //   } else {
+  //     errorMessage.innerHTML = "";
+  //   }
+  // });
+
+  // password.addEventListener("input", () => {
+  //   const validatedPassword = validatePassword(password.value);
+
+  //   if (!validatedPassword.isValid) {
+  //     errorMessage.innerHTML = "Lösenord måste anges";
+  //   } else {
+  //     errorMessage.innerHTML = "";
+  //   }
+  // });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    console.log("entering submit");
+
+    const user = validateLogin(username.value, password.value, errorMessage);
+
+    if (user === undefined) {
+      console.log("user undefined");
+      return;
+    }
+
+    fetch("https://localhost:7264/api/users/login", {
+      method: "POST",
+      body: JSON.stringify(user),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    }).then(async (response) => {
+      const data = await parseResponse(response);
+
+      if (response.ok) {
+        console.log(data);
+        console.log(response);
+        
+        //navigate("")
+      } else {
+        console.log(data);
+        if (Array.isArray(data.errors)) {
+          const messages = data.errors.map((err) => err).join("<br>");
+          errorMessage.innerHTML = messages;
+        } else if (typeof data === "string") {
+          errorMessage.innerHTML = data;
+        } else {
+          errorMessage.innerHTML = "Ett okänt fel inträffade.";
+        }
+      }
+    });
+  });
+};
+
+const validateLogin = (username, password, errorMessage) => {
+  const validatedUsername = validateName(username);
+  const validatedPassword = validatePassword(password);
+
+  if (!validatedUsername.isValid || !validatedPassword.isValid) {
+    errorMessage.innerHTML = "Fel";
+    return;
+  }
+  return { Username: username, Password: password };
+};
+
+const parseResponse = async (response) => {
+  let data;
+  const contentType = response.headers.get("content-type");
+
+  // check format of the response to parse it appropriately
+  if (contentType?.includes("application/json")) {
+    data = await response.json();
+  } else {
+    data = await response.text();
+  }
+
+  return data;
+};
+
 export const registerAccount = () => {
   const emailInput = document.querySelector("#email");
   const emailLabel = document.querySelector("#emailFeedback");
@@ -13,7 +104,7 @@ export const registerAccount = () => {
   const form = document.querySelector("#registerForm");
 
   emailInput.addEventListener("input", () => {
-    const validatedEmail = validateEmail(emailInput.value.trim());
+    const validatedEmail = validateEmail(emailInput.value);
 
     if (!validatedEmail.isValid) {
       emailLabel.innerHTML = validatedEmail.message;
@@ -23,7 +114,7 @@ export const registerAccount = () => {
   });
 
   nameInput.addEventListener("input", () => {
-    const validatedName = validateName(nameInput.value.trim());
+    const validatedName = validateName(nameInput.value);
 
     if (!validatedName.isValid) {
       nameLabel.innerHTML = validatedName.message;
@@ -33,7 +124,7 @@ export const registerAccount = () => {
   });
 
   passwordInput.addEventListener("input", () => {
-    const validatedPassword = validatePassword(passwordInput.value.trim());
+    const validatedPassword = validatePassword(passwordInput.value);
 
     if (!validatedPassword.isValid) {
       passwordLabel.innerHTML = validatedPassword.message;
@@ -44,8 +135,8 @@ export const registerAccount = () => {
 
   repeatPasswordInput.addEventListener("input", () => {
     const validatedRepeatPassword = validateRepeatPassword(
-      passwordInput.value.trim(),
-      repeatPasswordInput.value.trim()
+      passwordInput.value,
+      repeatPasswordInput.value
     );
 
     if (!validatedRepeatPassword.isValid) {
@@ -59,7 +150,7 @@ export const registerAccount = () => {
     e.preventDefault();
 
     // One last validation before post, return user object if successful.
-    const user = validateForm(
+    const user = validateRegisterForm(
       emailInput.value,
       emailLabel,
       nameInput.value,
@@ -82,15 +173,8 @@ export const registerAccount = () => {
         "Content-type": "application/json; charset=UTF-8",
       },
     }).then(async (response) => {
-      let data;
-      const contentType = response.headers.get("content-type");
+      const data = await parseResponse(response);
 
-      // check format of the response to parse it appropriately
-      if (contentType?.includes("application/json")) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
       if (response.ok) {
         successMessage.innerHTML = data;
         errorMessage.innerHTML = "";
@@ -99,21 +183,21 @@ export const registerAccount = () => {
         passwordInput.value = "";
         repeatPasswordInput.value = "";
       } else {
-        if (Array.isArray(data)) {
-          const messages = data.map((err) => err.errorMessage).join("<br>");
+        if (Array.isArray(data.errors)) {
+          const messages = data.errors.map((err) => err).join("<br>");
           errorMessage.innerHTML = messages;
         } else if (typeof data === "string") {
           errorMessage.innerHTML = data;
         } else {
           errorMessage.innerHTML = "Ett okänt fel inträffade.";
-          successMessage.innerHTML = "";
         }
+        successMessage.innerHTML = "";
       }
     });
   });
 };
 
-const validateForm = (
+const validateRegisterForm = (
   email,
   emailLabel,
   name,
@@ -123,12 +207,12 @@ const validateForm = (
   repeatPassword,
   repeatPasswordLabel
 ) => {
-  const validatedEmail = validateEmail(email.trim());
-  const validatedName = validateName(name.trim());
-  const validatedPassword = validatePassword(password.trim());
+  const validatedEmail = validateEmail(email);
+  const validatedName = validateName(name);
+  const validatedPassword = validatePassword(password);
   const validatedRepeatPassword = validateRepeatPassword(
-    password.trim(),
-    repeatPassword.trim()
+    password,
+    repeatPassword
   );
 
   if (!validatedEmail.isValid) {
@@ -151,6 +235,7 @@ const validateForm = (
 };
 
 const validateEmail = (email) => {
+  email = email.trim();
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   if (email.length === 0) {
@@ -163,6 +248,7 @@ const validateEmail = (email) => {
 };
 
 const validateName = (name) => {
+  name = name.trim();
   const nameRegex = /^[a-zA-Z]\w{1,30}$/;
 
   if (name.length === 0) {
@@ -178,9 +264,10 @@ const validateName = (name) => {
 };
 
 const validatePassword = (password) => {
+  password = password.trim();
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/;
 
-  if (email.length < 8 || !passwordRegex.exec(password)) {
+  if (password.length < 8 || !passwordRegex.exec(password)) {
     return {
       isValid: false,
       message:
@@ -191,6 +278,9 @@ const validatePassword = (password) => {
 };
 
 const validateRepeatPassword = (password, repeatPassword) => {
+  password = password.trim();
+  repeatPassword = repeatPassword.trim();
+
   if (password !== repeatPassword) {
     return { isValid: false, message: "Lösenorden måste matcha" };
   }

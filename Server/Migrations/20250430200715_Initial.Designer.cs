@@ -12,8 +12,8 @@ using Server.Models;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20250430142054_identity")]
-    partial class identity
+    [Migration("20250430200715_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -212,6 +212,40 @@ namespace Server.Migrations
                     b.ToTable("Tables");
                 });
 
+            modelBuilder.Entity("Server.Models.SecurityModels.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("Server.Models.UserModels.User", b =>
                 {
                     b.Property<string>("Id")
@@ -343,6 +377,17 @@ namespace Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Table");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.SecurityModels.RefreshToken", b =>
+                {
+                    b.HasOne("Server.Models.UserModels.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

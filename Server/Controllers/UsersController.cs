@@ -18,7 +18,7 @@ namespace Server.Controllers
     {
         private readonly IUserService _userService;
         private readonly JwtHelperService _jwtHelperService;
-        
+
 
         public UsersController(IUserService dataRepository, JwtHelperService jwtHelperService)
         {
@@ -26,6 +26,7 @@ namespace Server.Controllers
             _jwtHelperService = jwtHelperService;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -45,6 +46,7 @@ namespace Server.Controllers
             return Ok(new { UserId = userId, Username = username });
         }
 
+        [Authorize]
         [HttpGet("{id}", Name = "GetUser")]
         public async Task<IActionResult> GetUser(string id)
         {
@@ -79,7 +81,36 @@ namespace Server.Controllers
             {
                 return Unauthorized(new { errors = result.Errors });
             }
-            
+            if (!string.IsNullOrWhiteSpace(result.Token))
+            {
+                Response.Cookies.Append("jwt", result.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(60)
+                });
+            }
+            if (result.RefreshToken != null)
+            {
+                Response.Cookies.Append("refreshToken", result.RefreshToken.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
+            }
+            if (!string.IsNullOrWhiteSpace(result.UserId))
+            {
+                Response.Cookies.Append("userId", result.UserId, new CookieOptions
+                {
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
+            }
+
             return Ok(result);
         }
     }

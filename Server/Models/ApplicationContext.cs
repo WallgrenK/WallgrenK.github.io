@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Server.Models.SeatingModels;
+using Server.Models.SecurityModels;
 using Server.Models.UserModels;
 
 namespace Server.Models
 {
     public class ApplicationContext : IdentityDbContext<User>
-
     {
-
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) { }
         public DbSet<Table> Tables { get; set; }
         public DbSet<Seat> Seats { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -51,6 +51,22 @@ namespace Server.Models
 
                 entity.HasIndex(s => s.BookedByUserId)
                     .IsUnique();
+            });
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+
+                entity.Property(t => t.Token).IsRequired()
+                .HasMaxLength(150);
+
+                entity.Property(t => t.UserId).IsRequired()
+                .HasMaxLength(512);
+
+                entity.HasOne(t => t.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(t => t.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

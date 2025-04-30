@@ -23,7 +23,7 @@ namespace Server.Controllers
             _cancelSeatValidator = cancelSeatValidator;
         }
 
-        
+        [Authorize]
         [HttpGet]
         public IActionResult Index()
         {

@@ -14,14 +14,14 @@ namespace Server.Security.Identity
             using (var context = new ApplicationContext(
                 serviceProvider.GetRequiredService<DbContextOptions<ApplicationContext>>()))
             {
-                var adminID = await EnsureUser(serviceProvider, testUserPw, "superadmin@databruket.se");
+                var adminID = await EnsureUser(serviceProvider, testUserPw, "Hasse", "superadmin@databruket.se");
                 await EnsureRole(serviceProvider, adminID, "superAdmin");
 
                 // allowed user can create and edit contacts that they create
-                var managerID = await EnsureUser(serviceProvider, testUserPw, "admin@databruket.se");
+                var managerID = await EnsureUser(serviceProvider, testUserPw, "Klasse", "admin@databruket.se");
                 await EnsureRole(serviceProvider, managerID, "admin");
 
-                var userID = await EnsureUser(serviceProvider, testUserPw, "user@databruket.se");
+                var userID = await EnsureUser(serviceProvider, testUserPw, "Lasse", "user@databruket.se");
                 await EnsureRole(serviceProvider, userID, "user");
 
                 SeedDB(serviceProvider);
@@ -64,7 +64,7 @@ namespace Server.Security.Identity
         }
 
         private static async Task<string> EnsureUser(IServiceProvider serviceProvider,
-                                            string testUserPw, string userName)
+                                            string testUserPw, string userName, string email)
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
 
@@ -74,7 +74,7 @@ namespace Server.Security.Identity
                 user = new User
                 {
                     UserName = userName,
-                    Email = userName,
+                    Email = email,
                     EmailConfirmed = true
                 };
                 var result = await userManager.CreateAsync(user, testUserPw);

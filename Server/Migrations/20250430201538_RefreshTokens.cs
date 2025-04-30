@@ -5,7 +5,7 @@
 namespace Server.Migrations
 {
     /// <inheritdoc />
-    public partial class newMigration : Migration
+    public partial class RefreshTokens : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

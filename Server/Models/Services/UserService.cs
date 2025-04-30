@@ -3,6 +3,7 @@ using FluentValidation.Results;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server.Models.Interface;
+using Server.Models.SecurityModels;
 using Server.Models.UserModels;
 using Server.Models.UserModels.DTO;
 using Server.Security.Jwt;
@@ -16,14 +17,18 @@ namespace Server.Models.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly IValidator<RegisterDTO> _registerValidator;
         private readonly JwtHelperService _jwtHelperService;
+        private readonly ITokenService _tokenService;
+        private readonly UserManager<User> _userManager;
 
-        public UserService(JwtHelperService jwtHelperService, IValidator<RegisterDTO> registerValidator, IServiceProvider serviceProvider, ApplicationContext context, ILogger<UserService> logger)
+        public UserService(UserManager<User> userManager, ITokenService tokenService, JwtHelperService jwtHelperService, IValidator<RegisterDTO> registerValidator, IServiceProvider serviceProvider, ApplicationContext context, ILogger<UserService> logger)
         {
             _context = context;
             _logger = logger;
             _serviceProvider = serviceProvider;
             _registerValidator = registerValidator;
             _jwtHelperService = jwtHelperService;
+            _tokenService = tokenService;
+            _userManager = userManager;
         }
         public async Task AddAsync(User entity)
         {
@@ -78,7 +83,6 @@ namespace Server.Models.Services
         public async Task<RegistrationResult> RegisterAsync(RegisterDTO dto)
         {
             var errors = new List<string>();
-            var userManager = _serviceProvider.GetRequiredService<UserManager<User>>();
             ValidationResult validationResult = await _registerValidator.ValidateAsync(dto);
 
             if (!validationResult.IsValid)
@@ -109,7 +113,7 @@ namespace Server.Models.Services
                 Email = dto.Email
             };
 
-            var result = await userManager.CreateAsync(user, dto.Password);
+            var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
             {
                 return new RegistrationResult
@@ -118,7 +122,7 @@ namespace Server.Models.Services
                     Errors = result.Errors.Select(e => e.Description)
                 };
             }
-            await userManager.AddToRoleAsync(user, "user");
+            await _userManager.AddToRoleAsync(user, "user");
             await this.AddAsync(user);
 
             return new RegistrationResult
@@ -130,19 +134,28 @@ namespace Server.Models.Services
 
         public async Task<LoginResult> LoginAsync(LoginDTO dto)
         {
-            var userManager = _serviceProvider.GetRequiredService<UserManager<User>>();
             var errors = new List<string>();
+            
             var user = await this.GetUserByUsernameAsync(dto.Username);
 
-            if (user == null || user.UserName == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            if (user == null || user.UserName == null || !(await _userManager.CheckPasswordAsync(user, dto.Password)))
             {
+                _logger.LogError($"Unsuccessful login attempt for {dto.Username}");
                 errors.Add("Ogiltigt användarnamn eller lösenord");
                 return new LoginResult { Succeeded = false, Errors = errors };
             }
 
-            string token = _jwtHelperService.GenerateToken(user);
+            string accessToken = await _jwtHelperService.GenerateToken(user);
+            RefreshToken refreshToken = await _tokenService.GenerateRefreshTokenAsync(user.Id);
 
-            return new LoginResult { Succeeded = true, Token = token, UserId = user.Id};
+            _logger.LogDebug($"User with userId: {user.Id} was successfully logged in.");
+            return new LoginResult 
+            { 
+                Succeeded = true, 
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                UserId = user.Id
+            };
         }
     }
 }
