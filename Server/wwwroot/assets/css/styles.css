@@ -10956,3 +10956,35 @@ header.masthead h1, header.masthead .h1 {
 .card-header p {
   color: #0052ff;
 }
+.booking .table {
+  border-spacing: 10px;
+  border-collapse: separate;
+  width: 10px;
+  background-color: #00060d;
+}
+
+.booking tr {
+  border: none;
+}
+
+.booking td {
+  border: none;
+  border-radius: 10px;
+  background-color: #020914;
+  color: #fff;
+  text-align: center;
+}
+
+.booking td:hover {
+  background: #0053ff;
+  cursor: pointer;
+}
+
+.booking .taken {
+  background-color: red;
+}
+
+.booking .taken:hover {
+  cursor: not-allowed;
+  background-color: red;
+}
